@@ -13,9 +13,9 @@ public class FireingAdvanced implements Fireing {
     @Override
     public void fire() {
         kiler.setBulletColor(Color.GREEN);
-        if (Math.abs(kiler.angleInDegree) <= 3) {
+        if (Math.abs(kiler.gunAngleToTurnInDegree) <= 1) {
             if (kiler.getGunHeat() == 0) {
-                kiler.fire(Math.min(3 - Math.abs(kiler.angleInDegree), kiler.getEnergy() - .1));
+                kiler.setFire(Math.min(3 - Math.abs(kiler.gunAngleToTurnInDegree), kiler.getEnergy() - .1));
             }
         }
 

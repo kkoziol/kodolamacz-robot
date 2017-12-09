@@ -15,10 +15,12 @@ public class StanInitial implements Stan {
             me.setDebugProperty("State Strategy:", "Initial");
             return this;
         case 1:
-            me.setDebugProperty("State Strategy:", "OneOnOne");
+            me.setDebugProperty("State Strategy:", "OneOnOne-walcze");
             return new StanWalcze(me);
+            //jak wiecej przeciwnikow... to to samo
+            //potem mozna dodac nastepny zestaw strategii
         default:
-            me.setDebugProperty("State Strategy:", "ManyOnOne");
+            me.setDebugProperty("State Strategy:", "ManyOnOne-jeszcze nie umie");
             return new StanWalcze(me);
         }
     }
@@ -26,7 +28,7 @@ public class StanInitial implements Stan {
     @Override
     public void updateStrategies() {
         me.movement = new MovementDoNothing(me);
-        me.fireing = new FireingBasic(me);
+        me.fireing = new FireingDoNothing(me);
     }
 
 }

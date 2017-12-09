@@ -4,21 +4,20 @@ public class StanWygrana implements Stan {
 
     private Kiler kiler;
 
-
     public StanWygrana(Kiler kiler) {
         this.kiler = kiler;
     }
-    
-    
+
     @Override
-    public void onWin() {
-        // Victory dance
-        kiler.turnRight(36000);
+    public Stan chooseStrategiesState() {
+        //stan koncowy nic juz sienie zmieni
+        return this;
     }
 
-
     @Override
-    public void move() {
+    public void updateStrategies() {
+        kiler.movement = new MovementWinDance(kiler);
+        kiler.fireing = new FireingDoNothing(kiler);
     }
 
 }

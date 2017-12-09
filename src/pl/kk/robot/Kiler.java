@@ -7,30 +7,30 @@ import robocode.AdvancedRobot;
 import robocode.Condition;
 import robocode.CustomEvent;
 import robocode.HitByBulletEvent;
+import robocode.Rules;
 import robocode.ScannedRobotEvent;
 import robocode.WinEvent;
 import robocode.util.Utils;
 
 public class Kiler extends AdvancedRobot {
+    // Stan strategi robota
+    Stan stan = new StanInitial(this);
+
+    // aktualny zestaw strategi
+    Fireing fireing = new FireingDoNothing(this);
+    Movement movement = new MovementDoNothing(this);
 
     int trigger = 90;
     int kierunek = 1;
-    double angleInDegree;
+    double gunAngleToTurnInDegree;
 
-    
-    Stan state = new StanInitial(this);
-    
-    Fireing fireing = new FireingBasic(this);
-    Movement movement = new MovementDoNothing(this);
-    
+    ScannedRobotEvent currentEnemy;
 
-    Stan stan;
-    
-    
     public void run() {
-
+        // Ustawienie niezaleznosci obrotów
+        setAdjustGunForRobotTurn(true);
         setAdjustRadarForGunTurn(true);
-        
+
         setBodyColor(Color.CYAN);
         setGunColor(Color.CYAN);
         setRadarColor(Color.BLUE);
@@ -45,22 +45,24 @@ public class Kiler extends AdvancedRobot {
         });
 
         while (true) {
-            
-         // Turn the radar if we have no more turn, starts it if it stops and at the start of round
-//            if ( getRadarTurnRemaining() == 0.0 )
-//                setTurnRadarRightRadians(Double.POSITIVE_INFINITY );
-            
-            //ruchy
-            move();
-        
-
-            //celowane
-//            if(getGunTurnRemaining() <= 0.01)
-//               setTurnGunRight(angleInDegree);
-            
-            //strzelanie
-            fireing.fire();
+            // dokonaj wyboru nowego zestawu strategi
             stan = stan.chooseStrategiesState();
+            // pozmieniaj zawartosci zmiennych strategii
+            stan.updateStrategies();
+
+            // zakrec radarem, jezeli z jakiegos powodu stanol
+            if (getRadarTurnRemaining() == 0.0)
+                setTurnRadarRightRadians(Double.POSITIVE_INFINITY);
+
+            // ruchy
+            movement.move();
+
+            // celowane
+            if (getGunTurnRemaining() == 0.00)
+                setTurnGunRight(gunAngleToTurnInDegree);
+
+            // strzelanie
+            fireing.fire();
             execute();
         }
 
@@ -69,57 +71,33 @@ public class Kiler extends AdvancedRobot {
     public void onScannedRobot(ScannedRobotEvent e) {
         setDebugProperty("lastScannedRobot", e.getName() + " at " + e.getBearing() + " degrees at time " + getTime());
 
-        //        fire(1);
-
-        // Calculate exact location of the robot
-        double absoluteBearing = getHeading() + e.getBearing();
-        double bearingFromGun = Utils.normalRelativeAngleDegrees(absoluteBearing - getGunHeading());
-
-        // If it's close enough, fire!
-        if (Math.abs(bearingFromGun) <= 3) {
-            turnGunRight(bearingFromGun);
-            // We check gun heat here, because calling fire()
-            // uses a turn, which could cause us to lose track
-            // of the other robot.
-            if (getGunHeat() == 0) {
-                fire(Math.min(3 - Math.abs(bearingFromGun), getEnergy() - .1));
-            }
-        } // otherwise just set the gun to turn.
-          // Note:  This will have no effect until we call scan()
-        else {
-            turnGunRight(bearingFromGun);
-        }
-        // Generates another scan event if we see a robot.
-        // We only need to call this if the gun (and therefore radar)
-        // are not turning.  Otherwise, scan is called automatically.
-        if (bearingFromGun == 0) {
-            scan();
-        }
-        /*
-        // Absolute angle towards target
+        currentEnemy = e;
+        
         double angleToEnemy = getHeadingRadians() + e.getBearingRadians();
-     
-        // Subtract current radar heading to get the turn required to face the enemy, be sure it is normalized
-        double radarTurn = Utils.normalRelativeAngle( angleToEnemy - getRadarHeadingRadians() );
-     
+
+        // Subtract current radar heading to get the turn required to face the enemy, be
+        // sure it is normalized
+        double radarTurn = Utils.normalRelativeAngle(angleToEnemy - getRadarHeadingRadians());
+
         // Distance we want to scan from middle of enemy to either side
         // The 36.0 is how many units from the center of the enemy robot it scans.
-        double extraTurn = Math.min( Math.atan( 36.0 / e.getDistance() ), Rules.RADAR_TURN_RATE_RADIANS );
-     
-        // Adjust the radar turn so it goes that much further in the direction it is going to turn
-        // Basically if we were going to turn it left, turn it even more left, if right, turn more right.
-        // This allows us to overshoot our enemy so that we get a good sweep that will not slip.
+        double extraTurn = Math.min(Math.atan(36.0 / e.getDistance()), Rules.RADAR_TURN_RATE_RADIANS);
+
+        // Adjust the radar turn so it goes that much further in the direction it is
+        // going to turn
+        // Basically if we were going to turn it left, turn it even more left, if right,
+        // turn more right.
+        // This allows us to overshoot our enemy so that we get a good sweep that will
+        // not slip.
         if (radarTurn < 0)
             radarTurn -= extraTurn;
         else
             radarTurn += extraTurn;
-     
-        //Turn the radar
+
+        // Turn the radar
         setTurnRadarRightRadians(radarTurn);
 
-        angleInDegree = Utils.normalRelativeAngleDegrees(e.getBearing() + getHeading() - getGunHeading());
-        */
-        
+        gunAngleToTurnInDegree = Utils.normalRelativeAngleDegrees(e.getBearing() + getHeading() - getGunHeading());
 
     }
 
@@ -139,23 +117,21 @@ public class Kiler extends AdvancedRobot {
         g.drawOval((int) (getX() - 59), (int) (getY() - 59), 118, 118);
         g.drawOval((int) (getX() - 60), (int) (getY() - 60), 120, 120);
 
-        turnLeft(90 - e.getBearing());
-  }
-    
+    }
+
     public void onCustomEvent(CustomEvent e) {
         if (e.getCondition().getName().equals("spadek-energi")) {
             trigger = trigger - 20;
 
             out.println("Ouch, down to " + (int) (getEnergy() + .5) + " energy.");
             fireing = new FireingAdvanced(this);
-            
-            turnLeft(65);
-            ahead(100);
+
+             turnLeft(65);
         }
     }
 
     public void onWin(WinEvent e) {
-        stan.onWin();
+        movement.onWin();
     }
 
     public void onPaint(Graphics2D g) {
@@ -164,7 +140,5 @@ public class Kiler extends AdvancedRobot {
         g.setColor(new Color(0, 0xFF, 0, 30));
         g.fillOval((int) (getX() - 60), (int) (getY() - 60), 120, 120);
     }
-
-
 
 }

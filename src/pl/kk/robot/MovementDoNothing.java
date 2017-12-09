@@ -9,4 +9,8 @@ public class MovementDoNothing implements Movement {
     public void move() {
     }
 
+    @Override
+    public void onWin() {
+    }
+
 }

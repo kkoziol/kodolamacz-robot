@@ -13,8 +13,11 @@ public class MovementWinDance implements Movement {
         for (int i = 0; i < 50; i++) {
             me.turnRight(30);
             me.turnLeft(30);
-      }
+        }
     }
 
+    @Override
+    public void onWin() {
+    }
 
 }
