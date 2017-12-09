@@ -3,7 +3,12 @@ package pl.kk.robot;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-import robocode.*;
+import robocode.AdvancedRobot;
+import robocode.Condition;
+import robocode.CustomEvent;
+import robocode.HitByBulletEvent;
+import robocode.ScannedRobotEvent;
+import robocode.WinEvent;
 import robocode.util.Utils;
 
 public class Kiler extends AdvancedRobot {
@@ -12,7 +17,12 @@ public class Kiler extends AdvancedRobot {
     int kierunek = 1;
     double angleInDegree;
 
+    
+    Stan state = new StanInitial(this);
+    
     Fireing fireing = new FireingBasic(this);
+    Movement movement = new MovementDoNothing(this);
+    
 
     Stan stan;
     
@@ -41,7 +51,7 @@ public class Kiler extends AdvancedRobot {
 //                setTurnRadarRightRadians(Double.POSITIVE_INFINITY );
             
             //ruchy
-            stan.move();
+            move();
         
 
             //celowane
@@ -50,7 +60,7 @@ public class Kiler extends AdvancedRobot {
             
             //strzelanie
             fireing.fire();
-            stan = stan.determineNextStan();
+            stan = stan.chooseStrategiesState();
             execute();
         }
 
